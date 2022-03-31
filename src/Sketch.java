@@ -33,7 +33,9 @@ public class Sketch extends PApplet implements MetaEventListener{
 	public void settings() {
 		size(800,600);
 	}
+	
 	public void setup() {
+		// load the song and start playing
 		try {
 			sequencer = MidiSystem.getSequencer();
 			sequencer.open();
@@ -46,14 +48,16 @@ public class Sketch extends PApplet implements MetaEventListener{
 	        sequencer.addMetaEventListener(this);
 	        BPM = sequencer.getTempoInBPM();
 	        sequence = sequencer.getSequence();
+	        cleanMIDI();
 		} catch (MidiUnavailableException | IOException | InvalidMidiDataException e) {
 			e.printStackTrace();
 		}
-        
 	}
 	
 	public void draw() {
 		background(0);
+		
+		// rough gui
 		fill(255);
 		textSize(50);
 		text("song: "+midiFile, 100, 100);
@@ -86,11 +90,62 @@ public class Sketch extends PApplet implements MetaEventListener{
 		} else if(key == 'n') {
 			minToMaj();
 		}
-		
-		
-		
 	}
+	
+	
+	// list used to hold notes to be replaced
 	ArrayList<MidiEvent> list;
+	// get rid of onNote messages that should be offNote
+	public void cleanMIDI() {
+		sequencer.stop();
+		int count = 0;
+		for(Track t : sequence.getTracks()) {
+			list = new ArrayList<MidiEvent>();
+			MidiEvent me;
+			MidiMessage mm;
+			for(int i = 0; i < t.size(); i++) {
+				me = t.get(i);
+				mm = me.getMessage();
+				int stat = mm.getStatus();
+				// find only MIDI messages that are either on or off (but avoid channel 10, where drums usually are)
+				if( stat >= 0x80 && stat <= 0x9F && stat != 0x89 && stat != 0x99) {
+					t.remove(me);
+					i--;
+					ShortMessage you = new ShortMessage();
+					
+					// find "onNote" messages that should be "offNote" and swap it
+					if(mm.getMessage()[2] == 0x00 && stat > 0x8F) {
+						stat -= 16;
+					}
+					
+					try {
+						count++;
+						you.setMessage(stat, mm.getMessage()[1], mm.getMessage()[2]);
+					} catch (InvalidMidiDataException e) {
+						// TODO Auto-generated catch block
+						try {
+							you.setMessage(stat, mm.getMessage()[1], mm.getMessage()[2]);
+						} catch (InvalidMidiDataException e1) {
+							// TODO Auto-generated catch block
+							e1.printStackTrace();
+						}
+					}
+					
+					list.add(new MidiEvent(you,me.getTick()));
+				}
+			}
+			for(MidiEvent m: list) {
+				t.add(m);
+			}
+			list.clear();
+		}
+		
+		println(count);
+		sequencer.start();
+		sequencer.setTempoInBPM(BPM);
+	}
+	
+	// increase pitch of all notes by "by"
 	public void pitchShift(int by) {
 		sequencer.stop();
 		int count = 0;
@@ -102,21 +157,11 @@ public class Sketch extends PApplet implements MetaEventListener{
 				me = t.get(i);
 				mm = me.getMessage();
 				int stat = mm.getStatus();
+				// find only MIDI messages that are either on or off (but avoid channel 10, where drums usually are)
 				if( stat >= 0x80 && stat <= 0x9F && stat != 0x89 && stat != 0x99) {
 					t.remove(me);
 					i--;
-					//t.add(new MidiEvent(new MidiMessage(), me.getTick()));
-					//me.getMessage().setMessage(me.getMessage().getMessage(), me.getMessage().getLength());
 					ShortMessage you = new ShortMessage();
-					//println(String.format("%02X",mm.getMessage()[0]) + " " + 
-					//		String.format("%02X",mm.getMessage()[1]) + " " + 
-					//		String.format("%02X",mm.getMessage()[2]) + " "
-					//);
-					
-					if(mm.getMessage()[2] == 0x00 && stat > 0x8F) {
-						stat -= 16;
-						//println(String.format("%02X",stat));
-					}
 					
 					try {
 						count++;
@@ -147,6 +192,7 @@ public class Sketch extends PApplet implements MetaEventListener{
 		sequencer.setTempoInBPM(BPM);
 	}
 	
+	// pitch shift only notes to make maj to min
 	public void majToMin() {
 		sequencer.stop();
 		int count = 0;
@@ -163,10 +209,6 @@ public class Sketch extends PApplet implements MetaEventListener{
 					t.remove(me);
 					i--;
 					ShortMessage you = new ShortMessage();
-					
-					if(mm.getMessage()[2] == 0x00 && stat > 0x8F) {
-						stat -= 16;
-					}
 					
 					// flat 3rd, flat 6, flat 7
 					println(mm.getMessage()[1] + " " + mm.getMessage()[1]%12);
@@ -206,6 +248,7 @@ public class Sketch extends PApplet implements MetaEventListener{
 	}
 	
 
+	// pitch shift only notes to make min to maj
 	public void minToMaj() {
 		sequencer.stop();
 		int count = 0;
@@ -222,10 +265,6 @@ public class Sketch extends PApplet implements MetaEventListener{
 					t.remove(me);
 					i--;
 					ShortMessage you = new ShortMessage();
-					
-					if(mm.getMessage()[2] == 0x00 && stat > 0x8F) {
-						stat -= 16;
-					}
 					
 					println(mm.getMessage()[1] + " " + mm.getMessage()[1]%12);
 					if(mm.getMessage()[1]%12 == (ogKey+3)%12 ) {
@@ -263,14 +302,17 @@ public class Sketch extends PApplet implements MetaEventListener{
 		sequencer.setTempoInBPM(BPM);
 	}
 	
+	// this avoids messages MIDI files send to reset the tempo
 	public void meta(MetaMessage meta) {
 		if(meta.getType() == 0x51) {
 			print("AYE!");
 			sequencer.setTempoInBPM(BPM);
 		}
+		//TODO: scale new tempo rather than set it to current BPM
 		
 	}
 	
+	// this gets the PApplet skethc up and running
 	public static void main(String[] args) {
 		String[] processingArgs = {"Sketch"};
 		Sketch mySketch = new Sketch();
