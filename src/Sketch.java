@@ -42,6 +42,12 @@ public class Sketch extends PApplet implements MetaEventListener{
 	// Whole Whole Half Whole Whole Whole Half
 	int[] majStep = new int[] {2,2,1,2,2,2,1};
 	
+	//UI stuff
+	int topBar = 50;
+	
+	int channelThick = 180;
+	
+	
 	// this gets the PApplet sketch up and running
 	public static void main(String[] args) {
 		String[] processingArgs = {"Sketch"};
@@ -112,8 +118,8 @@ public class Sketch extends PApplet implements MetaEventListener{
 		int count = 0;
 		for(int i = 0; i < 16; i++) {
 			if(channels[i].active) {
-				float y = map(count,0,activeCount, 0, height);
-				image(channels[i].roll,-xoff,y);
+				float y = count*channelThick + topBar;
+				image(channels[i].roll,-xoff,y,channels[i].roll.width,channelThick);
 				count++;
 			}
 		}
