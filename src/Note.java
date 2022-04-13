@@ -25,7 +25,6 @@ public class Note {
 					length = t.get(i).getTick() - start;
 					if(length < s.getResolution()/16) {
 						length = s.getResolution()/16;
-						System.out.println("yo");
 					}
 					break;
 				}
