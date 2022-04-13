@@ -1,4 +1,8 @@
 import processing.core.PApplet;
+import processing.event.MouseEvent;
+import processing.opengl.PGraphicsOpenGL;
+import com.jogamp.*;
+
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -29,6 +33,8 @@ public class Sketch extends PApplet implements MetaEventListener{
 	int songChoice = 1;
 	
 	long view;
+	int wheelOff;
+	boolean channelHeld;
 	
 	ArrayList<Song> library = new ArrayList<Song>();
 	Song song;
@@ -43,10 +49,28 @@ public class Sketch extends PApplet implements MetaEventListener{
 	int[] majStep = new int[] {2,2,1,2,2,2,1};
 	
 	//UI stuff
-	int topBar = 50;
+	int topBar = 40;
+	int GIVE = 10;
+	int barW = 0;
 	
-	int channelThick = 180;
+	int channelThick = 160;
+	int channelScroll;
 	
+	
+
+	Button bSongName;
+	Button bTempoUp;
+	Button bTempo;
+	Button bTempoDown;
+	Button bPitchUp;
+	Button bPitch;
+	Button bPitchDown;
+	Button bToMajor;
+	Button bToMinor;
+	Button bNextSong;
+	Button bPrevSong;
+	
+	Button[] bs;
 	
 	// this gets the PApplet sketch up and running
 	public static void main(String[] args) {
@@ -68,19 +92,44 @@ public class Sketch extends PApplet implements MetaEventListener{
 		
 		library.add(new Song("Toxic.mid",0,-2));
 		library.add(new Song("September.mid",-3,0));
-		library.add(new Song("AngelIslandZone1.mid",0,4));
-		library.add(new Song("AngelIslandZone2.mid",0,2));
+		//library.add(new Song("AngelIslandZone1.mid",0,4));
+		//library.add(new Song("AngelIslandZone2.mid",0,2));
 		library.add(new Song("Undertale-Megalovania.mid",2,-2));
-		library.add(new Song("FonsaMyma(Night).mid",4,-2));
-		library.add(new Song("PopStar.mid",5,0));
-		library.add(new Song("GreenHillZone.mid",0,0));
-		library.add(new Song("ffxiii_desperate.mid",6,-2));
+		//library.add(new Song("FonsaMyma(Night).mid",4,-2));
+		//library.add(new Song("PopStar.mid",5,0));
+		//library.add(new Song("GreenHillZone.mid",0,0));
+		//library.add(new Song("ffxiii_desperate.mid",6,-2));
 		//library.add(new Song("Undertale-SpearOfJustice.mid",2,-2));
+		//library.add(new Song("Dua Lipa - Don't Start Now.mid",12-1,-2));
 		
 		song = library.get(songChoice);
 		
 		loadSong(song);
-		
+
+		bSongName= new Button(this,0,0,"Playing: ","");
+		bTempoUp = new Button(this,0,0,"+","tempoUp");
+		bTempo = new Button(this,0,0,"Tempo: ","");
+		bTempoDown = new Button(this,0,0,"-","tempoDown");
+		bPitchUp = new Button(this,0,0,"+","pitchUp");
+		bPitch = new Button(this,0,0,"Pitch: ","");
+		bPitchDown = new Button(this,0,0,"-","pitchDown");
+		bToMajor = new Button(this,0,0,"Major","toMaj");
+		bToMinor = new Button(this,0,0,"Minor","toMin");
+		bNextSong = new Button(this,0,0,"Next>","nextSong");
+		bPrevSong = new Button(this,0,0,"<Prev","prevSong");
+		bs = new Button[] {
+			bSongName,
+			bTempoDown,
+			bTempo,
+			bTempoUp,
+			bPitchDown,
+			bPitch,
+			bPitchUp,
+			bToMajor,
+			bToMinor,
+			bPrevSong,
+			bNextSong,
+		};
 	}
 	
 	public void loadSong(Song s) {
@@ -89,8 +138,8 @@ public class Sketch extends PApplet implements MetaEventListener{
 		songkey = s.ogKey;
 		mode = s.ogMode;
 		sequence = sequencer.getSequence();
-        view = sequence.getResolution()*8;
-        BPM = sequencer.getTempoInBPM();
+        view = sequence.getResolution()*16;
+        BPM = (int)sequencer.getTempoInBPM();
     	pitch = 0;
     	sequencer.addMetaEventListener(this);
     	
@@ -110,6 +159,13 @@ public class Sketch extends PApplet implements MetaEventListener{
 	public void draw() {
 		background(0);
 		
+		// tracks
+		
+		if(channelHeld) {
+			channelScroll += pmouseY - mouseY;
+		}
+		
+		channelScroll = constrain(channelScroll,0,activeCount*channelThick - height + topBar);
 		
 		long now = sequencer.getTickPosition();
 		now -= (160.0 * BPM * sequence.getResolution() / 60000);
@@ -118,11 +174,33 @@ public class Sketch extends PApplet implements MetaEventListener{
 		int count = 0;
 		for(int i = 0; i < 16; i++) {
 			if(channels[i].active) {
-				float y = count*channelThick + topBar;
+				float y = count*channelThick + topBar - channelScroll;
 				image(channels[i].roll,-xoff,y,channels[i].roll.width,channelThick);
 				count++;
 			}
 		}
+		
+		
+		// top bar
+		fill(20);
+		noStroke();
+		rect(0,0,width,topBar);
+		
+		
+		bTempo.setVal(""+BPM);
+		bPitch.setVal(""+pitch);
+		bSongName.setVal(""+song.filename);
+		float x = GIVE;
+		for(Button b: bs) {
+			b.setPos(x + width*.5f - barW*.5f, (topBar - b.getH())/2.0f);
+			b.update();
+			b.display();
+			x += b.getW() + GIVE;
+			if(b == bTempoDown || b == bTempo || b == bPitchDown || b == bPitch || b == bToMajor) {
+				x -= GIVE;
+			}
+		}
+		barW = (int)x;
 		
 		/*
 		for(int i = 0; i < 16; i++) {
@@ -151,6 +229,29 @@ public class Sketch extends PApplet implements MetaEventListener{
 		fill(255);
 		rect(100,400, map(sequencer.getTickPosition(), 0, sequencer.getTickLength(), 0, width - 200), 10);
 		*/
+	}
+	
+	public void mousePressed() {
+		for(Button b: bs) {
+			b.onMousePressed();
+		}
+		if(mouseY > topBar) {
+			channelHeld = true;
+		}
+	}
+	
+	public void mouseReleased() {
+		channelHeld = false;
+	}
+	
+	public void mouseWheel(MouseEvent e) {
+		channelScroll += pow(e.getCount(),3)*5;
+	}
+	
+	public boolean overRect(float x, float y, float w, float h) {
+		float mx = mouseX;
+		float my = mouseY;
+		return mx > x && mx < x+w && my > y && my < y+h;
 	}
 	
 	public void drawPianoRollChannel(int i, float inx, float iny, float inw, float inh, long start, long end){
@@ -209,47 +310,78 @@ public class Sketch extends PApplet implements MetaEventListener{
 	
 	public void keyPressed() {;
 		if(key == 'w') {
-			println("ok");
-			BPM += 10;
-			sequencer.setTempoInBPM(BPM);
+			doAction("tempoUp");
 		} else if(key == 's') {
-			BPM -= 10;
-			sequencer.setTempoInBPM(BPM);
+			doAction("tempoDown");
 		} else if(key == 'd') {
+			doAction("pitchUp");
+		} else if(key == 'a') {
+			doAction("pitchDown");
+		} else if(key == 'n') {
+			doAction("prevSong");
+		} else if(key == 'm') {
+			doAction("nextSong");
+		}
+		
+		int num = key - '0';
+		if(num >= 0 && num <= 6) {
+			doAction("toMode", new String[] {"" + num});
+		}
+		
+	}
+	public void doAction(String action) {
+		doAction(action,null);
+	}
+	
+	public void doAction(String action, String[] args) {
+		if(action == "tempoUp") {
+			BPM += 5;
+			sequencer.setTempoInBPM(BPM);
+		} else if(action == "tempoDown") {
+			BPM -= 5;
+			sequencer.setTempoInBPM(BPM);
+		} else if(action == "pitchUp") {
 			pitchShift(1);
 			pitch++;
 			pitchcheat++;
 			songkey++;
 			createChannelCanvases();
 			recalculateAllRange();
-		} else if(key == 'a') {
+		} else if(action == "pitchDown") {
 			pitchShift(-1);
 			pitch--;
 			pitchcheat--;
 			songkey--;
 			createChannelCanvases();
 			recalculateAllRange();
-		} else if(key == 'n') {
-			unloadSong();
-			songChoice = (songChoice-1+library.size())%library.size();
-			song = library.get(songChoice);
-			loadSong(song);
-		} else if(key == 'm') {
+		} else if(action == "toMaj") {
+			modeToMode(mode,0);
+			mode = 0;
+			createChannelCanvases();
+			recalculateAllRange();
+			sequencer.setTempoInBPM(BPM);
+		} else if(action == "toMin") {
+			modeToMode(mode,5);
+			mode = 5;
+			createChannelCanvases();
+			recalculateAllRange();
+		} else if(action == "toMode") {
+			int to = Integer.parseInt(args[0]);
+			modeToMode(mode,to);
+			mode = to;
+			createChannelCanvases();
+			recalculateAllRange();
+		} if(action == "nextSong") {
 			unloadSong();
 			songChoice = (songChoice+1)%library.size();
 			song = library.get(songChoice);
 			loadSong(song);
+		} else if(action == "prevSong") {
+			unloadSong();
+			songChoice = (songChoice-1+library.size())%library.size();
+			song = library.get(songChoice);
+			loadSong(song);
 		}
-		
-		int num = key - '0';
-		if(num >= 0 && num <= 6) {
-			modeToMode(mode,num);
-			mode = num;
-			createChannelCanvases();
-			recalculateAllRange();
-			//loadNotes();
-		}
-		
 	}
 	
 	
@@ -344,118 +476,6 @@ public class Sketch extends PApplet implements MetaEventListener{
 		//println(to);
 		//println(lookup);
 		editByLookup(lookup);
-	}
-	
-	// pitch shift only notes to make maj to min
-	// TODO: get rid of this, modeToMode does the same thing better, but this shows a bit more concretely how to shift from maj to min
-	public void majToMin() {
-		sequencer.stop();
-		int count = 0;
-		for(Track t : sequence.getTracks()) {
-			list = new ArrayList<MidiEvent>();
-			MidiEvent me;
-			MidiMessage mm;
-			for(int i = 0; i < t.size(); i++) {
-				int by = 0;
-				me = t.get(i);
-				mm = me.getMessage();
-				int stat = mm.getStatus();
-				if( stat >= 0x80 && stat <= 0x9F && stat != 0x89 && stat != 0x99) {
-					t.remove(me);
-					i--;
-					ShortMessage you = new ShortMessage();
-					
-					// flat 3rd, flat 6, flat 7
-					//println(mm.getMessage()[1] + " " + mm.getMessage()[1]%12);
-					if(mm.getMessage()[1]%12 == (songkey+4)%12 ) {
-						by = -1;
-					} else if(mm.getMessage()[1]%12 == (songkey+9)%12 ) {
-						by = -1;
-					} else if(mm.getMessage()[1]%12 == (songkey+11)%12 ) {
-						by = -1;
-					}
-					
-					try {
-						count++;
-						you.setMessage(stat, mm.getMessage()[1]+by, mm.getMessage()[2]);
-					} catch (InvalidMidiDataException e) {
-						try {
-							you.setMessage(stat, mm.getMessage()[1], mm.getMessage()[2]);
-						} catch (InvalidMidiDataException e1) {
-							e1.printStackTrace();
-						}
-					}
-					
-					list.add(new MidiEvent(you,me.getTick()));
-				} else {
-					//println(String.format("%02X",stat));
-				}
-			}
-			for(MidiEvent m: list) {
-				t.add(m);
-			}
-			list.clear();
-		}
-		
-		//println(count);
-		sequencer.start();
-		sequencer.setTempoInBPM(BPM);
-	}
-	
-
-	// pitch shift only notes to make min to maj
-	// TODO: get rid of this, modeToMode does the same thing better, but this shows a bit more concretely how to shift from min to maj
-	public void minToMaj() {
-		sequencer.stop();
-		int count = 0;
-		for(Track t : sequence.getTracks()) {
-			list = new ArrayList<MidiEvent>();
-			MidiEvent me;
-			MidiMessage mm;
-			for(int i = 0; i < t.size(); i++) {
-				int by = 0;
-				me = t.get(i);
-				mm = me.getMessage();
-				int stat = mm.getStatus();
-				if( stat >= 0x80 && stat <= 0x9F && stat != 0x89 && stat != 0x99) {
-					t.remove(me);
-					i--;
-					ShortMessage you = new ShortMessage();
-					
-					println(mm.getMessage()[1] + " " + mm.getMessage()[1]%12);
-					if(mm.getMessage()[1]%12 == (songkey+3)%12 ) {
-						by = 1;
-					} else if(mm.getMessage()[1]%12 == (songkey+8)%12 ) {
-						by = 1;
-					} else if(mm.getMessage()[1]%12 == (songkey+10)%12 ) {
-						by = 1;
-					}
-					
-					try {
-						count++;
-						you.setMessage(stat, mm.getMessage()[1]+by, mm.getMessage()[2]);
-					} catch (InvalidMidiDataException e) {
-						try {
-							you.setMessage(stat, mm.getMessage()[1], mm.getMessage()[2]);
-						} catch (InvalidMidiDataException e1) {
-							e1.printStackTrace();
-						}
-					}
-					
-					list.add(new MidiEvent(you,me.getTick()));
-				} else {
-					//println(String.format("%02X",stat));
-				}
-			}
-			for(MidiEvent m: list) {
-				t.add(m);
-			}
-			list.clear();
-		}
-		
-		println(count);
-		sequencer.start();
-		sequencer.setTempoInBPM(BPM);
 	}
 	
 	// this avoids messages MIDI files send to reset the tempo
@@ -554,8 +574,9 @@ public class Sketch extends PApplet implements MetaEventListener{
 			}
 			long end = sequencer.getTickLength();
 			int inw = (int)map(sequencer.getTickLength() ,0, view , 0, width);
-			int inh = (int)map(1,0,activeCount,0,height);
-	
+			//int inh = (int)map(1,0,activeCount,0,height);
+			int inh = channelThick;
+			
 			c.roll = createGraphics(inw,inh);
 			c.roll.beginDraw();
 			c.roll.colorMode(HSB);
@@ -564,8 +585,8 @@ public class Sketch extends PApplet implements MetaEventListener{
 			float x;
 			float y;
 			float w;
-			//float h = inh/128;
-			float h = inh/(c.maxPitch+pitchslack - c.minPitch-pitchslack) * 2;
+			float h = inh/128;
+			//float h = inh/(c.maxPitch+pitchslack - c.minPitch-pitchslack) * 2;
 			
 			//lines
 			long beat = sequence.getResolution();
@@ -587,17 +608,17 @@ public class Sketch extends PApplet implements MetaEventListener{
 				count++;
 			}
 			
-			c.roll.stroke(i*20,155,100);
-			c.roll.strokeWeight(2);
-			c.roll.noFill();
-			c.roll.rect(0,0,inw,inh);
+			c.roll.fill(i*20,85,130);
+			c.roll.noStroke();
+			c.roll.rect(0,0,inw,2);
+			c.roll.rect(0,inh,inw,-2);
 			
 			c.roll.strokeWeight(1);
 			
 			for(Note n: c) {
 				x = map(n.start, 0, end, 0, inw);
-				//y = map(n.pitch,0,128, iny+inh, iny);
-				y = map(n.pitch+pitchcheat,c.minPitch-pitchslack,c.maxPitch+pitchslack, inh, 0);
+				y = map(n.pitch+pitchcheat,0,128, inh, 0);
+				//y = map(n.pitch+pitchcheat,c.minPitch-pitchslack,c.maxPitch+pitchslack, inh, 0);
 				w = map(n.length,0, end, 0, inw);
 				//w = 2;
 				
