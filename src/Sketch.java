@@ -48,11 +48,12 @@ public class Sketch extends PApplet implements MetaEventListener{
 	int[] majStep = new int[] {2,2,1,2,2,2,1};
 	
 	//UI stuff
-	int topBar = 40;
+	int topBar = 40*2;
 	int GIVE = 10;
-	int barW = 0;
+	int[] barW = new int[] {0,0};
 	
 	int channelThick = 160;
+	int pchannelScroll;
 	int channelScroll;
 	
 	
@@ -67,10 +68,11 @@ public class Sketch extends PApplet implements MetaEventListener{
 	Button bToMajor;
 	Button bToMinor;
 	Button bNextSong;
+	Button bSong;
 	Button bPrevSong;
 	Button bInspiration;
 	
-	Button[] bs;
+	Button[][] bs;
 	
 	// this gets the PApplet sketch up and running
 	public static void main(String[] args) {
@@ -80,8 +82,8 @@ public class Sketch extends PApplet implements MetaEventListener{
 	}
 	
 	public void settings() {
-		//size(800,600);
-		fullScreen();
+		size(800,600);
+		//fullScreen();
 	}
 	
 	public void setup() {
@@ -113,24 +115,31 @@ public class Sketch extends PApplet implements MetaEventListener{
 		bPitchUp = new Button(this,0,0,"+","pitchUp");
 		bPitch = new Button(this,0,0,"Pitch: ","");
 		bPitchDown = new Button(this,0,0,"-","pitchDown");
-		bToMajor = new Button(this,0,0,"Major","toMaj");
-		bToMinor = new Button(this,0,0,"Minor","toMin");
-		bNextSong = new Button(this,0,0,"Next>","nextSong");
-		bPrevSong = new Button(this,0,0,"<Prev","prevSong");
-		bInspiration = new Button(this,0,0,"Need Inspiration?","");
-		bs = new Button[] {
-			bSongName,
-			bTempoDown,
-			bTempo,
-			bTempoUp,
-			bPitchDown,
-			bPitch,
-			bPitchUp,
-			bToMajor,
-			bToMinor,
-			bPrevSong,
-			bNextSong,
-			bInspiration,
+		bToMajor = new Button(this,0,0,"Maj","toMaj");
+		bToMinor = new Button(this,0,0,"Min","toMin");
+		bNextSong = new Button(this,0,0,">","nextSong");
+		bSong = new Button(this,0,0,"song","");
+		bPrevSong = new Button(this,0,0,"<","prevSong");
+		bInspiration = new Button(this,0,0,"Need Inspiration?"," ");
+		bInspiration.hue = 200;
+		bs = new Button[][] {
+			{
+				bTempoDown,
+				bTempo,
+				bTempoUp,
+				bPitchDown,
+				bPitch,
+				bPitchUp,
+				bToMajor,
+				bToMinor,
+				bInspiration,
+			},
+			{
+				bSongName,
+				bPrevSong,
+				bSong,
+				bNextSong,
+			}
 		};
 	}
 	
@@ -140,7 +149,7 @@ public class Sketch extends PApplet implements MetaEventListener{
 		songkey = s.ogKey;
 		mode = s.ogMode;
 		sequence = sequencer.getSequence();
-        view = sequence.getResolution()*16*2;
+        view = sequence.getResolution()*16*4;
         BPM = (int)sequencer.getTempoInBPM();
     	pitch = 0;
     	sequencer.addMetaEventListener(this);
@@ -168,6 +177,11 @@ public class Sketch extends PApplet implements MetaEventListener{
 		}
 		
 		channelScroll = constrain(channelScroll,0,activeCount*channelThick - height + topBar);
+		if(pchannelScroll/channelThick != channelScroll/channelThick) {
+			println("bib");
+			createChannelCanvases();
+		}
+		pchannelScroll = channelScroll;
 		
 		long now = sequencer.getTickPosition();
 		now -= (160.0 * BPM * sequence.getResolution() / 60000);
@@ -177,7 +191,9 @@ public class Sketch extends PApplet implements MetaEventListener{
 		for(int i = 0; i < 16; i++) {
 			if(channels[i].active) {
 				float y = count*channelThick + topBar - channelScroll;
-				image(channels[i].roll,-xoff,y,channels[i].roll.width,channelThick);
+				if(channels[i].roll != null) {
+					image(channels[i].roll,-xoff,y,channels[i].roll.width,channelThick);
+				}
 				count++;
 			}
 		}
@@ -192,18 +208,19 @@ public class Sketch extends PApplet implements MetaEventListener{
 		bTempo.setVal(""+BPM);
 		bPitch.setVal(""+pitch);
 		bSongName.setVal(""+song.filename);
-		float x = GIVE;
-		for(Button b: bs) {
-			b.setPos(x + width*.5f - barW*.5f, (topBar - b.getH())/2.0f);
-			b.update();
-			b.display();
-			x += b.getW() + GIVE;
-			if(b == bTempoDown || b == bTempo || b == bPitchDown || b == bPitch || b == bToMajor) {
-				x -= GIVE;
+		for(int i = 0; i < bs.length; i++) {
+			float x = GIVE;
+			for(Button b: bs[i]) {
+				b.setPos(x + width*.5f - barW[i]*.5f, topBar*.5f*i + (topBar*.5f - b.getH())/2.0f);
+				b.update();
+				b.display();
+				x += b.getW() + GIVE;
+				if(b == bTempoDown || b == bTempo || b == bPitchDown || b == bPitch || b == bToMajor || b == bPrevSong || b == bSong) {
+					x -= GIVE;
+				}
 			}
+			barW[i] = (int)x;
 		}
-		barW = (int)x;
-		
 		/*
 		for(int i = 0; i < 16; i++) {
 			if(channels[i].active) {
@@ -234,8 +251,10 @@ public class Sketch extends PApplet implements MetaEventListener{
 	}
 	
 	public void mousePressed() {
-		for(Button b: bs) {
-			b.onMousePressed();
+		for(Button[] barr: bs) {
+			for(Button b: barr) {
+				b.onMousePressed();
+			}
 		}
 		if(mouseY > topBar) {
 			channelHeld = true;
@@ -568,16 +587,23 @@ public class Sketch extends PApplet implements MetaEventListener{
 	
 	public void createChannelCanvases() {
 		Channel c;
-		
+		int account = 0;
 		for(int i = 0; i < 16; i++) {
 			c = channels[i];
 			if(!c.active) {
 				continue;
 			}
+			float cy = account*channelThick + topBar - channelScroll;
 			long end = sequencer.getTickLength();
 			int inw = (int)map(sequencer.getTickLength() ,0, view , 0, width);
 			//int inh = (int)map(1,0,activeCount,0,height);
 			int inh = channelThick;
+			
+			if(cy < -channelThick || cy > height+channelThick) {
+				c.roll = null;
+				account++;
+				continue;
+			}
 			
 			c.roll = createGraphics(inw,inh);
 			c.roll.beginDraw();
@@ -632,6 +658,7 @@ public class Sketch extends PApplet implements MetaEventListener{
 			}
 	
 			c.roll.endDraw();
+			account++;
 		}
 	}
 	

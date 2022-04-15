@@ -10,8 +10,9 @@ public class Button {
 	String text;
 	String action;
 	Sketch p;
+	int hue = -1;
 
-	int GIVE = 10;
+	int GIVE = 5;
 	
 	Button(Sketch p, float x, float y, String text, String action){
 		this.p = p;
@@ -32,22 +33,34 @@ public class Button {
 	
 	void update() {
 		p.textSize(20);
-		h = p.textDescent() + GIVE*2;
+		h = p.textDescent() + p.textAscent();
 		w = p.textWidth(text + val) + GIVE*2;
 	}
 	
 	void display() {
 		p.textSize(20);
-		p.textAlign(p.LEFT,p.TOP);
+		p.textAlign(p.LEFT,p.CENTER);
 		if(p.overRect(x,y,w,h) && action != "") {
-			p.fill(100);
+			if(hue == -1) {
+				p.fill(150);
+			} else {
+				p.fill(hue,150,150);
+			}
 		} else {
-			p.fill(50);
+			if(hue == -1) {
+				p.fill(80);
+			} else {
+				p.fill(hue,150,100);
+			}
 		}
 		p.noStroke();
 		p.rect(x,y,w,h,10);
-		p.fill(255);
-		p.text(text+val,x+GIVE,y);
+		if(hue == -1) {
+			p.fill(255);
+		} else {
+			p.fill(hue,50,255);
+		}
+		p.text(text+val,x+GIVE,y+h*.5f-GIVE);
 	}
 	
 	public void onMousePressed() {
