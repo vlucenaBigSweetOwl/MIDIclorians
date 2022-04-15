@@ -6,8 +6,6 @@
 			<attribute name="module" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="D:/Programs/processing-3.5.4/core/library/core.jar"/>
-	<classpathentry kind="lib" path="D:/Code/eclipse-workspace/MIDIclorians/lib/gluegen-v2.3.2/make/lib/v2.3.0/gluegen-rt.jar"/>
-	<classpathentry kind="lib" path="D:/Code/eclipse-workspace/MIDIclorians/lib/jogl-v2.3.2/make/lib/v2.3.0/jogl-all.jar"/>
+	<classpathentry kind="lib" path="C:/Users/hgse/Downloads/processing-3.5.4/core/library/core.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

@@ -1,7 +1,6 @@
 import processing.core.PApplet;
 import processing.event.MouseEvent;
 import processing.opengl.PGraphicsOpenGL;
-import com.jogamp.*;
 
 
 import java.io.BufferedInputStream;
@@ -69,6 +68,7 @@ public class Sketch extends PApplet implements MetaEventListener{
 	Button bToMinor;
 	Button bNextSong;
 	Button bPrevSong;
+	Button bInspiration;
 	
 	Button[] bs;
 	
@@ -117,6 +117,7 @@ public class Sketch extends PApplet implements MetaEventListener{
 		bToMinor = new Button(this,0,0,"Minor","toMin");
 		bNextSong = new Button(this,0,0,"Next>","nextSong");
 		bPrevSong = new Button(this,0,0,"<Prev","prevSong");
+		bInspiration = new Button(this,0,0,"Need Inspiration?","");
 		bs = new Button[] {
 			bSongName,
 			bTempoDown,
@@ -129,6 +130,7 @@ public class Sketch extends PApplet implements MetaEventListener{
 			bToMinor,
 			bPrevSong,
 			bNextSong,
+			bInspiration,
 		};
 	}
 	
@@ -138,7 +140,7 @@ public class Sketch extends PApplet implements MetaEventListener{
 		songkey = s.ogKey;
 		mode = s.ogMode;
 		sequence = sequencer.getSequence();
-        view = sequence.getResolution()*16;
+        view = sequence.getResolution()*16*2;
         BPM = (int)sequencer.getTempoInBPM();
     	pitch = 0;
     	sequencer.addMetaEventListener(this);
