@@ -13,11 +13,13 @@ public class Song {
 	String filename;
 	int ogKey;
 	int ogMode;
+	int ogBPM;
 	
 	public Song(String filename, int key, int mode){
 		this.filename = filename;
 		this.ogKey = (60 + key)%12;
 		this.ogMode = mode;
+		this.ogBPM = -1;
 	}
 	
 	public Sequencer loadSong(Sketch mel) {
@@ -28,6 +30,7 @@ public class Song {
 			File f = new File("assets/"+filename);
 	        InputStream is = new BufferedInputStream(new FileInputStream(f));
 	        sequencer.setSequence(is);
+	        ogBPM = (int)sequencer.getTempoInBPM();
 	        //mel.cleanMIDI();
 	        
 		} catch (MidiUnavailableException | IOException e) {
