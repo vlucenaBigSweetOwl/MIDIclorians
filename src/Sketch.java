@@ -21,6 +21,7 @@ import javax.sound.midi.MidiUnavailableException;
 import javax.sound.midi.Sequence;
 import javax.sound.midi.Sequencer;
 import javax.sound.midi.ShortMessage;
+import javax.sound.midi.Synthesizer;
 import javax.sound.midi.Track;
 
 public class Sketch extends PApplet implements MetaEventListener{
@@ -41,6 +42,7 @@ public class Sketch extends PApplet implements MetaEventListener{
 	
 	Sequencer sequencer;
 	public Sequence sequence;
+	public Synthesizer synthesizer;
 	
 	Channel[] channels = new Channel[16];
 	int activeCount = 0;
@@ -52,6 +54,7 @@ public class Sketch extends PApplet implements MetaEventListener{
 	
 	//UI stuff
 	int topBar = 40*2;
+	int sideBar = 200;
 	int GIVE = 10;
 	int[] barW = new int[] {0,0};
 	
@@ -101,9 +104,10 @@ public class Sketch extends PApplet implements MetaEventListener{
 		textFont(f);
 		colorMode(HSB);
 		for(int i = 0; i < channels.length; i++) {
-			channels[i] = new Channel();
+			channels[i] = new Channel(this,i);
 		}
 		
+		//library.add(new Song());
 		library.add(new Song("Toxic.mid",0,-2));
 		library.add(new Song("September.mid",-3,0));
 		//library.add(new Song("AngelIslandZone1.mid",0,4));
@@ -169,7 +173,13 @@ public class Sketch extends PApplet implements MetaEventListener{
         BPM = s.ogBPM;
     	pitch = 0;
     	sequencer.addMetaEventListener(this);
-    	
+    	try {
+			synthesizer = MidiSystem.getSynthesizer();
+			synthesizer.open();
+		} catch (MidiUnavailableException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
     	cleanMIDI();
     	loadNotes();
     	
@@ -206,12 +216,14 @@ public class Sketch extends PApplet implements MetaEventListener{
 		for(int i = 0; i < 16; i++) {
 			if(channels[i].active) {
 				float y = count*channelThick + topBar - channelScroll;
-				if(channels[i].roll != null) {
-					image(channels[i].roll,-xoff,y,channels[i].roll.width,channelThick);
-				}
+				channels[i].display(this, y, xoff);
 				count++;
 			}
 		}
+		
+
+		stroke(255);
+		line(width/2,0,width/2,height);
 		
 		
 		// top bar
@@ -250,8 +262,6 @@ public class Sketch extends PApplet implements MetaEventListener{
 		*/
 		
 		
-		stroke(255);
-		line(width/2,0,width/2,height);
 		
 		
 		/*
@@ -428,6 +438,9 @@ public class Sketch extends PApplet implements MetaEventListener{
 			sequencer.start();
 		} else if(action == "toStart") {
 			sequencer.setTickPosition(0);;
+		} else if(action == "mute") {
+			int c = Integer.parseInt(args[0]);
+			synthesizer.getChannels()[c].setMute(true);
 		}
 	}
 	
@@ -583,8 +596,9 @@ public class Sketch extends PApplet implements MetaEventListener{
 	
 	public void loadNotes() {
 		pitchcheat = 0;
-		for(Channel c: channels) {
-			c.clear();
+		for(int i = 0; i < 16; i++) {
+			channels[i].clear();
+			channels[i].mc = synthesizer.getChannels()[i];
 		}
 
 		topNote = 0;
@@ -600,6 +614,8 @@ public class Sketch extends PApplet implements MetaEventListener{
 				// find only MIDI messages that are either on or off (but avoid channel 10, where drums usually are)
 				if( stat >= 0x90 && stat <= 0x9F) {
 					channels[stat - 0x90].add(new Note(t,i,sequence));
+				} else if(stat >= 0xC0 && stat <= 0xCF) {
+					channels[stat - 0xC0].prog = ((ShortMessage)mm).getData1();
 				}
 			}
 		}

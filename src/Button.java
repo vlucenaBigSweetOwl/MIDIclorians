@@ -9,6 +9,7 @@ public class Button {
 	String val = "";
 	String text;
 	String action;
+	String[] args;
 	Sketch p;
 	int hue = -1;
 
@@ -20,6 +21,15 @@ public class Button {
 		this.y = y;
 		this.text = text;
 		this.action = action;
+	}
+	
+	Button(Sketch p, float x, float y, String text, String action, String[] args){
+		this.p = p;
+		this.x = x;
+		this.y = y;
+		this.text = text;
+		this.action = action;
+		this.args = args;
 	}
 	
 	public void setPos(float x, float y) {
@@ -65,7 +75,11 @@ public class Button {
 	
 	public void onMousePressed() {
 		if(p.overRect(x,y,w,h)) {
-			p.doAction(action);
+			if(args != null) {
+				p.doAction(action,args);
+			} else {
+				p.doAction(action);
+			}
 		}
 	}
 	
