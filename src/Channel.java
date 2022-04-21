@@ -34,8 +34,12 @@ public class Channel extends ArrayList<Note> {
 		index = i;
 		
 		bInstrument = new Button(s,0,0,"","");
-		bMute = new Button(s,0,0,"M","mute", new String[] {""+i});
-		bSolo = new Button(s,0,0,"S","solo", new String[] {""+i});
+		bMute = new Button(s,0,0,"Mute","mute", new String[] {""+i});
+		bSolo = new Button(s,0,0,"Solo","solo", new String[] {""+i});
+		bMute.lithue = 150;
+		bMute.togglable = true;
+		bSolo.lithue = 30;
+		bSolo.togglable = true;
 		
 		bs = new Button[][] {
 			{
@@ -72,14 +76,16 @@ public class Channel extends ArrayList<Note> {
 		
 		
 		String inst = "UNKNOWN";
-		if(prog >= 0) {
+		if(index == 9) {
+			inst = "Percussion";
+		} else if(prog >= 0) {
 			inst = s.synthesizer.getAvailableInstruments()[prog].getName();
 		}
 		bInstrument.setVal(inst);
 		for(int i = 0; i < bs.length; i++) {
 			float x = GIVE;
 			for(Button b: bs[i]) {
-				b.setPos(x + s.sideBar*.5f - barW[i]*.5f, y + s.channelThick*.5f*i + (s.channelThick*.5f - b.getH())/2.0f);
+				b.setPos(x + s.sideBar*.5f - barW[i]*.5f, y + s.channelThick*.2f*(i) + (s.channelThick*.5f - b.getH())/2.0f);
 				b.update();
 				b.display();
 				x += b.getW() + GIVE;

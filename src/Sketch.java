@@ -31,7 +31,7 @@ public class Sketch extends PApplet implements MetaEventListener{
 	int pitchcheat = 0;
 	int songkey;
 	int mode = 0;
-	int songChoice = 1;
+	int songChoice = 0;
 	
 	long view;
 	int wheelOff;
@@ -107,9 +107,10 @@ public class Sketch extends PApplet implements MetaEventListener{
 			channels[i] = new Channel(this,i);
 		}
 		
-		//library.add(new Song());
-		library.add(new Song("Toxic.mid",0,-2));
+		library.add(new Song("I Want To Hold Your Hand.mid",7,0));
+		library.add(new Song("Beggin.mid",-1,-2));
 		library.add(new Song("September.mid",-3,0));
+		library.add(new Song("Toxic.mid",0,-2));
 		//library.add(new Song("AngelIslandZone1.mid",0,4));
 		//library.add(new Song("AngelIslandZone2.mid",0,2));
 		library.add(new Song("Undertale-Megalovania.mid",2,-2));
@@ -127,6 +128,7 @@ public class Sketch extends PApplet implements MetaEventListener{
 		bSongName= new Button(this,0,0,"Playing: ","");
 		bTempoUp = new Button(this,0,0,"+","tempoUp");
 		bTempo = new Button(this,0,0,"Tempo: ","");
+		bTempo.tip = "This speeds it up mah DUUUDE!";
 		bTempoDown = new Button(this,0,0,"-","tempoDown");
 		bPitchUp = new Button(this,0,0,"+","pitchUp");
 		bPitch = new Button(this,0,0,"Pitch: ","");
@@ -165,6 +167,13 @@ public class Sketch extends PApplet implements MetaEventListener{
 	
 	public void loadSong(Song s) {
 		// load the song and start playing
+    	try {
+			synthesizer = MidiSystem.getSynthesizer();
+			synthesizer.open();
+		} catch (MidiUnavailableException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		sequencer = s.loadSong(this);
 		songkey = s.ogKey;
 		mode = s.ogMode;
@@ -173,13 +182,6 @@ public class Sketch extends PApplet implements MetaEventListener{
         BPM = s.ogBPM;
     	pitch = 0;
     	sequencer.addMetaEventListener(this);
-    	try {
-			synthesizer = MidiSystem.getSynthesizer();
-			synthesizer.open();
-		} catch (MidiUnavailableException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
     	cleanMIDI();
     	loadNotes();
     	
@@ -203,7 +205,6 @@ public class Sketch extends PApplet implements MetaEventListener{
 		
 		channelScroll = constrain(channelScroll,0,activeCount*channelThick - height + topBar);
 		if(pchannelScroll/channelThick != channelScroll/channelThick) {
-			println("bib");
 			createChannelCanvases();
 		}
 		pchannelScroll = channelScroll;
@@ -220,7 +221,6 @@ public class Sketch extends PApplet implements MetaEventListener{
 				count++;
 			}
 		}
-		
 
 		stroke(255);
 		line(width/2,0,width/2,height);
@@ -253,6 +253,11 @@ public class Sketch extends PApplet implements MetaEventListener{
 			}
 			barW[i] = (int)x;
 		}
+		for(int i = 0; i < bs.length; i++) {
+			for(Button b: bs[i]) {
+				b.toolTip();
+			}
+		}
 		/*
 		for(int i = 0; i < 16; i++) {
 			if(channels[i].active) {
@@ -284,6 +289,13 @@ public class Sketch extends PApplet implements MetaEventListener{
 		for(Button[] barr: bs) {
 			for(Button b: barr) {
 				b.onMousePressed();
+			}
+		}
+		for(Channel c: channels) {
+			for(Button[] barr: c.bs) {
+				for(Button b: barr) {
+					b.onMousePressed();
+				}
 			}
 		}
 		if(mouseY > topBar) {
@@ -440,7 +452,12 @@ public class Sketch extends PApplet implements MetaEventListener{
 			sequencer.setTickPosition(0);;
 		} else if(action == "mute") {
 			int c = Integer.parseInt(args[0]);
-			synthesizer.getChannels()[c].setMute(true);
+			println(c);
+			sequencer.setTrackMute(c+1, !sequencer.getTrackMute(c+1));
+		} else if(action == "solo") {
+			int c = Integer.parseInt(args[0]);
+			println(c);
+			sequencer.setTrackSolo(c+1, !sequencer.getTrackSolo(c+1));
 		}
 	}
 	
@@ -551,7 +568,7 @@ public class Sketch extends PApplet implements MetaEventListener{
 			print(meta.getStatus());
 		}
 	}
-	
+
 
 	// get rid of onNote messages that should be offNote
 	public void cleanMIDI() {
@@ -598,6 +615,8 @@ public class Sketch extends PApplet implements MetaEventListener{
 		pitchcheat = 0;
 		for(int i = 0; i < 16; i++) {
 			channels[i].clear();
+			channels[i].bMute.on = false;
+			channels[i].bSolo.on = false;
 			channels[i].mc = synthesizer.getChannels()[i];
 		}
 

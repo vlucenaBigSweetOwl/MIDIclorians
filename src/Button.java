@@ -12,6 +12,12 @@ public class Button {
 	String[] args;
 	Sketch p;
 	int hue = -1;
+	int lithue = -1;
+	boolean togglable;
+	boolean on;
+	
+	int overTick;
+	String tip = "";
 
 	int GIVE = 5;
 	
@@ -50,11 +56,20 @@ public class Button {
 	void display() {
 		p.textSize(20);
 		p.textAlign(p.LEFT,p.CENTER);
-		if(p.overRect(x,y,w,h) && action != "") {
-			if(hue == -1) {
+		
+		//button
+		boolean over = p.overRect(x,y,w,h);
+		if((over && action != "")) {
+			if(lithue == -1) {
 				p.fill(150);
 			} else {
-				p.fill(hue,150,150);
+				p.fill(lithue,150,150);
+			}
+		} else if (togglable && on)  {
+			if(lithue == -1) {
+				p.fill(120);
+			} else {
+				p.fill(lithue,150,130);
 			}
 		} else {
 			if(hue == -1) {
@@ -63,6 +78,8 @@ public class Button {
 				p.fill(hue,150,100);
 			}
 		}
+		
+		//text
 		p.noStroke();
 		p.rect(x,y,w,h,10);
 		if(hue == -1) {
@@ -71,10 +88,45 @@ public class Button {
 			p.fill(hue,50,255);
 		}
 		p.text(text+val,x+GIVE,y+h*.5f-GIVE);
+		
+		
+		
+	}
+	
+	public void toolTip() {
+		boolean over = p.overRect(x,y,w,h);
+		if(over) {
+			overTick++;
+		} else {
+			overTick = 0;
+		}
+		//tooltip
+		if(overTick > 100 && tip.length() > 0) {
+			p.textSize(16);
+			p.textAlign(p.LEFT,p.TOP);
+			
+			p.fill(200,125,200);
+			p.strokeWeight(1);
+			p.stroke(0);
+			
+			
+			float x = p.mouseX + 10;
+			float y = p.mouseY + 16;
+			float h = p.textDescent() + p.textAscent();
+			float w = p.textWidth(tip) + 6;
+			
+			p.rect(x,y,w,h);
+
+			p.fill(0);
+			p.text(tip, x+3, y);
+			
+			
+		}
 	}
 	
 	public void onMousePressed() {
 		if(p.overRect(x,y,w,h)) {
+			on = !on;
 			if(args != null) {
 				p.doAction(action,args);
 			} else {
