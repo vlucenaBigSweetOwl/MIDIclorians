@@ -54,7 +54,9 @@ public class Sketch extends PApplet implements MetaEventListener{
 	
 	//UI stuff
 	int topBar = 40*2;
-	int sideBar = 200;
+	int chanBar = 200;
+	int jourBar = 50;
+	
 	int GIVE = 10;
 	int[] barW = new int[] {0,0};
 	
@@ -85,6 +87,9 @@ public class Sketch extends PApplet implements MetaEventListener{
 	
 	PFont f;
 	
+	ArrayList<Bubble> bubs = new ArrayList<Bubble>();
+	Bubble kept;
+	
 	// this gets the PApplet sketch up and running
 	public static void main(String[] args) {
 		String[] processingArgs = {"Sketch"};
@@ -93,7 +98,7 @@ public class Sketch extends PApplet implements MetaEventListener{
 	}
 	
 	public void settings() {
-		size(800,600);
+		size(1280,720);
 		//fullScreen();
 	}
 	
@@ -163,6 +168,9 @@ public class Sketch extends PApplet implements MetaEventListener{
 				bPlay,
 			}
 		};
+		
+		bubs.add(new Bubble(this,50,50,"Test","This is a test?\nWell ok then ..."));
+		bubs.add(new Bubble(this,50,50,"Test2","This is a second test?\nNow wait a minue ..."));
 	}
 	
 	public void loadSong(Song s) {
@@ -253,11 +261,37 @@ public class Sketch extends PApplet implements MetaEventListener{
 			}
 			barW[i] = (int)x;
 		}
+		
+		
+		//journal bar
+		fill(20);
+		noStroke();
+		rect(width,0,-jourBar,height);
+		
+		
+		
+		
+		
+		//bubbles
+		if(kept != null) {
+			kept.state = 100;
+			kept.statePos = 100;
+			kept.x = width-kept.br-jourBar;
+			kept.y = height-kept.br;
+			kept.display();
+		}
+		for(Bubble b: bubs) {
+			b.update();
+			b.display();
+		}
+		
+		//tool tip
 		for(int i = 0; i < bs.length; i++) {
 			for(Button b: bs[i]) {
 				b.toolTip();
 			}
 		}
+		
 		/*
 		for(int i = 0; i < 16; i++) {
 			if(channels[i].active) {
@@ -286,6 +320,16 @@ public class Sketch extends PApplet implements MetaEventListener{
 	}
 	
 	public void mousePressed() {
+		if(kept != null && kept.mousePressed()) {
+			bubs.add(kept);
+			kept = null;
+			return;
+		}
+		for(Bubble b: bubs) {
+			if(b.mousePressed()) {
+				return;
+			}
+		}
 		for(Button[] barr: bs) {
 			for(Button b: barr) {
 				b.onMousePressed();
@@ -304,7 +348,26 @@ public class Sketch extends PApplet implements MetaEventListener{
 	}
 	
 	public void mouseReleased() {
+		Bubble temp = null;
 		channelHeld = false;
+		for(Bubble b: bubs) {
+			if(b.mouseReleased()) {
+				if(kept != null) {
+					temp = kept;
+				}
+				kept = b;
+				println("hi");
+			}
+		}
+		if(kept != null) {
+			bubs.remove(kept);
+		}
+		if(temp != null) {
+			bubs.add(temp);
+			temp.statePos = 0;
+			temp.vx = -25;
+			temp.vy = -25;
+		}
 	}
 	
 	public void mouseWheel(MouseEvent e) {

@@ -72,7 +72,7 @@ public class Channel extends ArrayList<Note> {
 		s.fill(50);
 		s.stroke(index*15,85,130);
 		s.strokeWeight(3);
-		s.rect(0,y,s.sideBar,s.channelThick);
+		s.rect(0,y,s.chanBar,s.channelThick);
 		
 		
 		String inst = "UNKNOWN";
@@ -85,7 +85,7 @@ public class Channel extends ArrayList<Note> {
 		for(int i = 0; i < bs.length; i++) {
 			float x = GIVE;
 			for(Button b: bs[i]) {
-				b.setPos(x + s.sideBar*.5f - barW[i]*.5f, y + s.channelThick*.2f*(i) + (s.channelThick*.5f - b.getH())/2.0f);
+				b.setPos(x + s.chanBar*.5f - barW[i]*.5f, y + s.channelThick*.2f*(i) + (s.channelThick*.5f - b.getH())/2.0f);
 				b.update();
 				b.display();
 				x += b.getW() + GIVE;
