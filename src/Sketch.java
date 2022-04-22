@@ -55,7 +55,7 @@ public class Sketch extends PApplet implements MetaEventListener{
 	//UI stuff
 	int topBar = 40*2;
 	int chanBar = 200;
-	int jourBar = 50;
+	int jourBar = 70;
 	
 	int GIVE = 10;
 	int[] barW = new int[] {0,0};
@@ -88,6 +88,7 @@ public class Sketch extends PApplet implements MetaEventListener{
 	PFont f;
 	
 	ArrayList<Bubble> bubs = new ArrayList<Bubble>();
+	ArrayList<Bubble> jbubs = new ArrayList<Bubble>();
 	Bubble kept;
 	
 	// this gets the PApplet sketch up and running
@@ -264,11 +265,37 @@ public class Sketch extends PApplet implements MetaEventListener{
 		
 		
 		//journal bar
-		fill(20);
+		if(mouseX > width - jourBar) {
+			fill(120);
+		} else {
+			fill(20);
+		}
+		
 		noStroke();
 		rect(width,0,-jourBar,height);
+		fill(255);
+		for(int i = 0; i < jbubs.size(); i++) {
+			float y = height - jourBar*.5f - jourBar*i;
+			
+			stroke(220,150,255,200);
+			strokeWeight(3);
+			fill(220,50,80,200);
+			ellipse(width-jourBar*.5f,y,jourBar-GIVE,jourBar-GIVE);
+			
+			textSize(16);
+			fill(220,150,255,255);
+			textAlign(CENTER,CENTER);
+			text(jbubs.get(i).title, width-jourBar*.5f,y-4);
+		}
 		
-		
+		stroke(100);
+		strokeWeight(3);
+		fill(50);
+		ellipse(width-jourBar*.5f,height - jourBar*.5f - jourBar*jbubs.size(),jourBar-GIVE,jourBar-GIVE);
+		textSize(30);
+		fill(100);
+		textAlign(CENTER,CENTER);
+		text("+",width-jourBar*.5f,height - jourBar*.5f - jourBar*jbubs.size()-4);
 		
 		
 		
@@ -280,9 +307,13 @@ public class Sketch extends PApplet implements MetaEventListener{
 			kept.y = height-kept.br;
 			kept.display();
 		}
-		for(Bubble b: bubs) {
-			b.update();
-			b.display();
+		for(int i = 0; i < bubs.size(); i++) {
+			bubs.get(i).update();
+			bubs.get(i).display();
+			if(bubs.get(i).popped > 100) {
+				bubs.remove(i);
+				i--;
+			}
 		}
 		
 		//tool tip
@@ -320,6 +351,18 @@ public class Sketch extends PApplet implements MetaEventListener{
 	}
 	
 	public void mousePressed() {
+		if(mouseX > width - jourBar) {
+			for(int i = 0; i < jbubs.size(); i++) {
+				float y = height - jourBar - jourBar*i;
+				if(dist(mouseX,mouseY,width-jourBar*.5f,y) < jourBar-GIVE) {
+					Bubble b = jbubs.remove(i);
+					b.held = true;
+					b.x = width-jourBar*.5f;
+					b.y = y;
+					bubs.add(b);
+				}
+			}
+		}
 		if(kept != null && kept.mousePressed()) {
 			bubs.add(kept);
 			kept = null;
@@ -335,15 +378,17 @@ public class Sketch extends PApplet implements MetaEventListener{
 				b.onMousePressed();
 			}
 		}
-		for(Channel c: channels) {
-			for(Button[] barr: c.bs) {
-				for(Button b: barr) {
-					b.onMousePressed();
+		if(mouseY > topBar) {
+			for(Channel c: channels) {
+				for(Button[] barr: c.bs) {
+					for(Button b: barr) {
+						b.onMousePressed();
+					}
 				}
 			}
-		}
-		if(mouseY > topBar) {
-			channelHeld = true;
+			if(mouseX > chanBar) {
+				channelHeld = true;
+			}
 		}
 	}
 	
@@ -351,18 +396,28 @@ public class Sketch extends PApplet implements MetaEventListener{
 		Bubble temp = null;
 		channelHeld = false;
 		for(Bubble b: bubs) {
+			if(b.held&& mouseX > width-jourBar) {
+				temp = b;
+			}
 			if(b.mouseReleased()) {
 				if(kept != null) {
 					temp = kept;
 				}
 				kept = b;
-				println("hi");
 			}
 		}
 		if(kept != null) {
 			bubs.remove(kept);
 		}
 		if(temp != null) {
+			if(mouseX > width-jourBar) {
+				jbubs.add(temp);
+				bubs.remove(temp);
+				if(kept != null && temp == kept) {
+					kept = null;
+				}
+				return;
+			}
 			bubs.add(temp);
 			temp.statePos = 0;
 			temp.vx = -25;

@@ -35,7 +35,7 @@ public class Bubble {
 	
 	void update() {
 		float r = s.map(statePos,0,100,sr,br);
-		if(!held && s.dist(s.mouseX,s.mouseY,x,y) < r ) {
+		if(!s.mousePressed && s.dist(s.mouseX,s.mouseY,x,y) < r ) {
 			state = 100;
 		} else {
 			state = 0;
