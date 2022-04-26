@@ -18,8 +18,10 @@ public class Channel extends ArrayList<Note> {
 	
 	PGraphics roll;
 	
-	
+
+	Button bInstrumentPrev;
 	Button bInstrument;
+	Button bInstrumentNext;
 	Button bMute;
 	Button bSolo;
 	Button[][] bs;
@@ -34,6 +36,8 @@ public class Channel extends ArrayList<Note> {
 		index = i;
 		
 		bInstrument = new Button(s,0,0,"","");
+		bInstrumentPrev = new Button(s,0,0,"<","prevInst", new String[] {""+i});
+		bInstrumentNext = new Button(s,0,0,">","nextInst", new String[] {""+i});
 		bMute = new Button(s,0,0,"Mute","mute", new String[] {""+i});
 		bSolo = new Button(s,0,0,"Solo","solo", new String[] {""+i});
 		bMute.lithue = 150;
@@ -43,7 +47,9 @@ public class Channel extends ArrayList<Note> {
 		
 		bs = new Button[][] {
 			{
+				bInstrumentPrev,
 				bInstrument,
+				bInstrumentNext,
 			},
 			{
 				bMute,

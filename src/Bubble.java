@@ -146,7 +146,7 @@ public class Bubble {
 	boolean mouseReleased() {
 		if(held) {
 			held = false;
-			if(heldCount < 10) {
+			if(heldCount < 5) {
 				popped = 0;
 				return false;
 			}

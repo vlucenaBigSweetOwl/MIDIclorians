@@ -576,6 +576,10 @@ public class Sketch extends PApplet implements MetaEventListener{
 			int c = Integer.parseInt(args[0]);
 			println(c);
 			sequencer.setTrackSolo(c+1, !sequencer.getTrackSolo(c+1));
+		} else if(action == "prevInst") {
+			int c = Integer.parseInt(args[0]);
+			println(c);
+			//sequencer.
 		}
 	}
 	
