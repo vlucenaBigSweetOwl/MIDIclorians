@@ -49,6 +49,8 @@ public class Sketch extends PApplet implements MetaEventListener{
 	int topNote = 108;
 	int botNote = 21;
 	
+	boolean bright = true;
+	
 	// Whole Whole Half Whole Whole Whole Half
 	int[] majStep = new int[] {2,2,1,2,2,2,1};
 	
@@ -64,6 +66,8 @@ public class Sketch extends PApplet implements MetaEventListener{
 	int pchannelScroll;
 	int channelScroll;
 	
+	int tutCount = 60*60;
+	Bubble tut;
 	
 
 	Button bSongName;
@@ -78,6 +82,7 @@ public class Sketch extends PApplet implements MetaEventListener{
 	Button bNextSong;
 	Button bPrevSong;
 	Button bInspiration;
+	Button bUIMode;
 	
 	Button bRestart;
 	Button bPause;
@@ -87,6 +92,8 @@ public class Sketch extends PApplet implements MetaEventListener{
 	
 	PFont f;
 	
+	
+	ArrayList<Bubble> grab = new ArrayList<Bubble>();
 	ArrayList<Bubble> bubs = new ArrayList<Bubble>();
 	ArrayList<Bubble> jbubs = new ArrayList<Bubble>();
 	Bubble kept;
@@ -99,8 +106,8 @@ public class Sketch extends PApplet implements MetaEventListener{
 	}
 	
 	public void settings() {
-		size(1280,720);
-		//fullScreen();
+		//size(1024, 576);
+		fullScreen();
 	}
 	
 	public void setup() {
@@ -130,26 +137,43 @@ public class Sketch extends PApplet implements MetaEventListener{
 		song = library.get(songChoice);
 		
 		loadSong(song);
+		/*
+		Tempo: Tempo is the speed of the music. Click ‘+’ to increase speed and ‘-’ to decrease it.
 
+		Pitch: Pitch refers to individual sounds in a piece of music. Clicking ‘+,’ moves all sounds higher 
+		(higher pitch is like when a person inhales helium), and ‘-’ moves all sounds lower. 
+
+		Maj: If a song is not in a major key, this button changes just a few sounds throughout the music. Major keys are often associated with happy sounding music.
+
+		Min: If a song is not in a minor key, this button changes just a few sounds throughout the music. Minor keys are often associated with sad sounding music.
+		 */
+		
 		bSongName= new Button(this,0,0,"Playing: ","");
 		bTempoUp = new Button(this,0,0,"+","tempoUp");
 		bTempo = new Button(this,0,0,"Tempo: ","");
-		bTempo.tip = "This speeds it up mah DUUUDE!";
+		bTempo.tip = "Tempo is the speed of the music";
 		bTempoDown = new Button(this,0,0,"-","tempoDown");
 		bPitchUp = new Button(this,0,0,"+","pitchUp");
 		bPitch = new Button(this,0,0,"Pitch: ","");
+		bPitch.tip = "Makes all of the notes go up or down by this many steps";
 		bPitchDown = new Button(this,0,0,"-","pitchDown");
 		bToMajor = new Button(this,0,0,"Maj","toMaj");
+		bToMajor.tip = "If the song is in minor key, this changes some of the notes to make it major";
 		bToMinor = new Button(this,0,0,"Min","toMin");
+		bToMinor.tip = "If the song is in major key, this changes some of the notes to make it minor";
 		bNextSong = new Button(this,0,0,"⏭","nextSong");
 		bPrevSong = new Button(this,0,0,"⏮","prevSong");
-		bInspiration = new Button(this,0,0,"Need Inspiration?"," ");
+		bInspiration = new Button(this,0,0,"Need Inspiration?","bubble");
 		bInspiration.hue = 200;
+		bInspiration.lithue = 200;
+		bUIMode = new Button(this,0,0,"UI Mode","bright");
+		bUIMode.invert = true;
 		bRestart = new Button(this,0,0,"∣◀","toStart");
 		bPause = new Button(this,0,0,"⏸","pause");
 		bPlay = new Button(this,0,0,"▶","play");
 		bs = new Button[][] {
 			{
+				bUIMode,
 				bTempoDown,
 				bTempo,
 				bTempoUp,
@@ -170,8 +194,21 @@ public class Sketch extends PApplet implements MetaEventListener{
 			}
 		};
 		
-		bubs.add(new Bubble(this,50,50,"Test","This is a test?\nWell ok then ..."));
-		bubs.add(new Bubble(this,50,50,"Test2","This is a second test?\nNow wait a minue ..."));
+		
+		tut = new Bubble(this,200,200,"Bubbles","This is an\nInspiration Bubble!\nYou can click on it to pop it\nDrag it to keep it around\nOr save it on the sidebar\nwhen you're done!");
+		
+		grab.add(new Bubble(this,200,200,"Mood","Think a bit about\nhow this song makes you feel\nNow make it feel more relaxed\nMake it feel more frantic"));
+		grab.add(new Bubble(this,200,200,"Lullaby","See if you can turn this song\ninto a lullaby"));
+		grab.add(new Bubble(this,200,200,"Spooky","Can you make this\nsong sound more spooky?"));
+		grab.add(new Bubble(this,200,200,"Minimal","How many tracks\ncan you mute and\nstill recognize the\nsong?"));
+		//grab.add(new Bubble(this,200,200,"Mood","Think a bit about\nhow this song makes you feel\nNow make it feel more relaxed\nMake it feel more frantic"));
+		//grab.add(new Bubble(this,200,200,"Mood","Think a bit about\nhow this song makes you feel\nNow make it feel more relaxed\nMake it feel more frantic"));
+		
+		//tut = new Bubble(this,200,200,"Hover\nOver\nMe","Bubble contain chalenges\nand are spawned when you\nclick the \"Need Inspiration\" button.\nIf you'd like to remove them from view\nclick to pop.\nIf you're interested in saving them\ndrag to the right sidebar.");
+		//bubs.add(tut);
+		
+		//bubs.add(new Bubble(this,50,50,"Test","This is a test?\nWell ok then ..."));
+		//bubs.add(new Bubble(this,450,50,"Test2","This is a second test?\nNow wait a minue ..."));
 	}
 	
 	public void loadSong(Song s) {
@@ -204,7 +241,24 @@ public class Sketch extends PApplet implements MetaEventListener{
 	}
 	
 	public void draw() {
-		background(0);
+		
+		for(int i = 0; i < bubs.size(); i++) {
+			for(int j = i+1; j < bubs.size(); j++) {
+				bubs.get(i).checkCol(bubs.get(j));
+			}
+		}
+		
+		if(bright) {
+			background(40,50,180);
+		} else {
+			background(0);
+		}
+		
+		
+		tutCount--;
+		if(tutCount == 0) {
+			bubs.add(tut);
+		}
 		
 		// tracks
 		
@@ -230,14 +284,23 @@ public class Sketch extends PApplet implements MetaEventListener{
 				count++;
 			}
 		}
-
-		stroke(255);
+		if(bright) {
+			stroke(0);
+		} else {
+			stroke(255);
+		}
 		line(width/2,0,width/2,height);
 		
 		
 		// top bar
-		fill(20);
-		noStroke();
+		if(bright) {
+			fill(40, 40, 220);
+			stroke(40, 40, 150);
+		} else {
+			fill(20);
+			stroke(0);
+		}
+		strokeWeight(3);
 		rect(0,0,width,topBar);
 		
 		float fixed = ((int)(BPM*100/song.ogBPM)/100.0f);
@@ -266,16 +329,27 @@ public class Sketch extends PApplet implements MetaEventListener{
 		
 		//journal bar
 		if(mouseX > width - jourBar) {
-			fill(120);
+			if(bright) {
+				fill(40,40,140);
+				stroke(40,40,100);
+			} else {
+				fill(120);
+				stroke(100);
+			}
 		} else {
-			fill(20);
+			if(bright) {
+				fill(40,40,230);
+				stroke(40,40,150);
+			} else {
+				fill(20);
+				stroke(0);
+			}
 		}
-		
-		noStroke();
+		strokeWeight(3);
 		rect(width,0,-jourBar,height);
 		fill(255);
 		for(int i = 0; i < jbubs.size(); i++) {
-			float y = height - jourBar*.5f - jourBar*i;
+			float y = jourBar*.5f + jourBar*i;
 			
 			stroke(220,150,255,200);
 			strokeWeight(3);
@@ -287,15 +361,19 @@ public class Sketch extends PApplet implements MetaEventListener{
 			textAlign(CENTER,CENTER);
 			text(jbubs.get(i).title, width-jourBar*.5f,y-4);
 		}
-		
-		stroke(100);
+		if(bright) {
+			stroke(40,50,200);
+			fill(40,50,150);
+		} else {
+			stroke(100);
+			fill(50);
+		}
 		strokeWeight(3);
-		fill(50);
-		ellipse(width-jourBar*.5f,height - jourBar*.5f - jourBar*jbubs.size(),jourBar-GIVE,jourBar-GIVE);
+		ellipse(width-jourBar*.5f, jourBar*.5f + jourBar*jbubs.size(),jourBar-GIVE,jourBar-GIVE);
 		textSize(30);
-		fill(100);
+		fill(40,50,200);
 		textAlign(CENTER,CENTER);
-		text("+",width-jourBar*.5f,height - jourBar*.5f - jourBar*jbubs.size()-4);
+		text("+",width-jourBar*.5f, jourBar*.5f + jourBar*jbubs.size()-4);
 		
 		
 		
@@ -311,7 +389,9 @@ public class Sketch extends PApplet implements MetaEventListener{
 			bubs.get(i).update();
 			bubs.get(i).display();
 			if(bubs.get(i).popped > 100) {
-				bubs.remove(i);
+				bubs.get(i).popped = -1;
+				grab.add(bubs.remove(i));
+				println(grab.size());
 				i--;
 			}
 		}
@@ -353,8 +433,8 @@ public class Sketch extends PApplet implements MetaEventListener{
 	public void mousePressed() {
 		if(mouseX > width - jourBar) {
 			for(int i = 0; i < jbubs.size(); i++) {
-				float y = height - jourBar - jourBar*i;
-				if(dist(mouseX,mouseY,width-jourBar*.5f,y) < jourBar-GIVE) {
+				float y = jourBar*.5f + jourBar*i;
+				if(dist(mouseX,mouseY,width-jourBar*.5f,y) < jourBar*.5f-GIVE) {
 					Bubble b = jbubs.remove(i);
 					b.held = true;
 					b.x = width-jourBar*.5f;
@@ -404,6 +484,7 @@ public class Sketch extends PApplet implements MetaEventListener{
 					temp = kept;
 				}
 				kept = b;
+				temp = null;
 			}
 		}
 		if(kept != null) {
@@ -580,6 +661,21 @@ public class Sketch extends PApplet implements MetaEventListener{
 			int c = Integer.parseInt(args[0]);
 			println(c);
 			//sequencer.
+		} else if (action == "bubble") {
+			if(tutCount > 0) {
+				bubs.add(tut);
+				tutCount = -1;
+			} else if (grab.size() > 0){
+				Bubble temp = grab.remove((int)random(grab.size()));
+				temp.x = random(200,width-200);
+				temp.y = random(200,height-200);
+				bubs.add(temp);
+				
+			}
+			
+		} else if (action == "bright") {
+			bright = !bright;
+			createChannelCanvases();
 		}
 	}
 	
@@ -796,6 +892,14 @@ public class Sketch extends PApplet implements MetaEventListener{
 			c.roll = createGraphics(inw,inh);
 			c.roll.beginDraw();
 			c.roll.colorMode(HSB);
+			
+			if(bright) {
+				c.roll.fill(220);
+			} else {
+				c.roll.fill(0);
+			}
+			c.roll.rect(0,0,inw,inh);
+			
 			int pitchslack = 2;
 			
 			float x;
@@ -811,20 +915,36 @@ public class Sketch extends PApplet implements MetaEventListener{
 			for(long l = 0; l < end; l+= beat/4 ) {
 				x = map(l, 0, end, 0, inw);
 				if(count%(4*4) == 0) {
-					c.roll.fill(75);
+					if(bright) {
+						c.roll.fill(150);
+					} else {
+						c.roll.fill(75);
+					}
 					c.roll.rect(x,0,2,height);
 				} else if(count%4 == 0) {
-					c.roll.fill(50);
+					if(bright) {
+						c.roll.fill(175);
+					} else {
+						c.roll.fill(50);
+					}
 					c.roll.rect(x,0,1,height);
 				} else {
-					c.roll.fill(25);
+					if(bright) {
+						c.roll.fill(200);
+					} else {
+						c.roll.fill(25);
+					}
 					c.roll.rect(x,0,1,height);
 				}
 				
 				count++;
 			}
 			
-			c.roll.fill(i*15,85,130);
+			if(bright) {
+				c.roll.fill(i*15,150,200);
+			} else {
+				c.roll.fill(i*15,85,130);
+			}
 			c.roll.noStroke();
 			c.roll.rect(0,0,inw,2);
 			c.roll.rect(0,inh,inw,-2);
@@ -841,7 +961,11 @@ public class Sketch extends PApplet implements MetaEventListener{
 				//stroke(i*20,155,255);
 				//strokeWeight(.5f);
 				c.roll.noStroke();
-				c.roll.fill(i*15,255,n.velocity*2);
+				if(bright) {
+					c.roll.fill(i*15,n.velocity*2,220);
+				} else {
+					c.roll.fill(i*15,255,n.velocity*2);
+				}
 				c.roll.rect(x,y,w,h);
 			}
 	

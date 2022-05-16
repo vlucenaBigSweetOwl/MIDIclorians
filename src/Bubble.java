@@ -15,6 +15,7 @@ public class Bubble {
 	float stateVel;
 	float stateDrag = 0.15f;
 	
+	
 	Sketch s;
 	
 	int GIVE = 8;
@@ -26,11 +27,12 @@ public class Bubble {
 		this.title = title;
 		this.body = body;
 		
-		s.textSize(30);
+		s.textSize(20);
 		sr = s.textWidth(title)*.5f + GIVE;
 		
-		s.textSize(20);
+		s.textSize(16);
 		br = Math.max(sr,s.textWidth(body)*.5f + GIVE*2);
+		statePos = br;
 	}
 	
 	void update() {
@@ -82,6 +84,30 @@ public class Bubble {
 		}
 	}
 	
+	void checkCol(Bubble o) {
+		float r = s.map(statePos,0,100,sr,br);
+		float or = s.map(o.statePos,0,100,o.sr,o.br);
+		float off = s.dist(x,y,o.x,o.y);
+		if(off < r + or) {
+			off -= r;
+			off -= or;
+			float offratio = off/( r + or);
+			float offx = (o.x - x)*offratio*.5f;
+			float offy = (o.y - y)*offratio*.5f;
+			
+			vx = offx;
+			vy = offy;
+			x += vx;
+			y += vy;
+			
+			o.vx = -offx;
+			o.vy = -offy;
+			o.x += o.vx;
+			o.y += o.vy;
+			
+		}
+	}
+	
 	void display() {
 		s.textAlign(s.CENTER,s.CENTER);
 		
@@ -104,11 +130,11 @@ public class Bubble {
 		s.fill(220,50,80,200 + statePos);
 		s.ellipse(x,y,r*2,r*2);
 		
-		s.textSize(30 + statePos*.2f);
+		s.textSize(20 + statePos*.2f);
 		s.fill(220,150,255,255-statePos*(300.0f/100));
 		s.text(title, x, y-4);
 		
-		float fix = 1 + 20*statePos*.01f;
+		float fix = 1 + 16*statePos*.01f;
 		if(fix <= 0) fix = 0.1f;
 		s.textSize(fix);
 		s.fill(220,100,255,statePos*(300.0f/100));

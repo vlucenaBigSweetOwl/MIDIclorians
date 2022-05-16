@@ -15,6 +15,7 @@ public class Button {
 	int lithue = -1;
 	boolean togglable;
 	boolean on;
+	boolean invert = false;
 	
 	int overTick;
 	String tip = "";
@@ -61,21 +62,38 @@ public class Button {
 		boolean over = p.overRect(x,y,w,h);
 		if((over && action != "")) {
 			if(lithue == -1) {
+				
 				p.fill(150);
 			} else {
 				p.fill(lithue,150,150);
 			}
 		} else if (togglable && on)  {
 			if(lithue == -1) {
-				p.fill(120);
+				if(p.bright ^ invert) {
+					p.fill(40,50,180);
+				} else {
+					p.fill(120);
+				}
 			} else {
-				p.fill(lithue,150,130);
+				if(p.bright ^ invert) {
+					p.fill(lithue,150,180);
+				} else {
+					p.fill(lithue,150,130);
+				}
 			}
 		} else {
 			if(hue == -1) {
-				p.fill(80);
+				if(p.bright ^ invert) {
+					p.fill(40,50,170);
+				} else {
+					p.fill(80);
+				}
 			} else {
-				p.fill(hue,150,100);
+				if(p.bright ^ invert) {
+					p.fill(hue,150,170);
+				} else {
+					p.fill(hue,150,100);
+				}
 			}
 		}
 		
@@ -83,9 +101,17 @@ public class Button {
 		p.noStroke();
 		p.rect(x,y,w,h,10);
 		if(hue == -1) {
-			p.fill(255);
+			if(p.bright ^ invert) {
+				p.fill(0);
+			} else {
+				p.fill(255);
+			}
 		} else {
-			p.fill(hue,50,255);
+			if(p.bright ^ invert) {
+				p.fill(hue,50,0);
+			} else {
+				p.fill(hue,50,255);
+			}
 		}
 		p.text(text+val,x+GIVE,y+h*.5f-GIVE);
 		
@@ -101,7 +127,7 @@ public class Button {
 			overTick = 0;
 		}
 		//tooltip
-		if(overTick > 100 && tip.length() > 0) {
+		if(overTick > 60 && tip.length() > 0) {
 			p.textSize(16);
 			p.textAlign(p.LEFT,p.TOP);
 			

@@ -74,10 +74,17 @@ public class Channel extends ArrayList<Note> {
 		if(roll != null) {
 			s.image(roll,-xoff,y,roll.width,s.channelThick);
 		}
-		
-		s.fill(50);
-		s.stroke(index*15,85,130);
-		s.strokeWeight(3);
+		if(s.bright) {
+			s.fill(40,40,210);
+		} else {
+			s.fill(50);
+		}
+		if(s.bright) {
+			s.stroke(index*15,150,200);
+		} else {
+			s.stroke(index*15,85,130);
+		}
+		s.strokeWeight(5);
 		s.rect(0,y,s.chanBar,s.channelThick);
 		
 		
